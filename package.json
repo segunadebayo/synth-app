@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prettify": "prettier --write \"./src/**/*.{js,ts,jsx,tsx,json}\""
   },
   "dependencies": {
     "@zag-js/core": "0.56.0",
@@ -24,6 +25,7 @@
     "@types/react-dom": "18.3.0",
     "eslint": "8.56.0",
     "eslint-config-next": "14.2.3",
+    "prettier": "^3.3.2",
     "typescript": "5.4.5"
   }
 }
