@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "panda codegen --clean",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -12,10 +13,12 @@
     "@zag-js/core": "0.56.0",
     "@zag-js/react": "0.56.0",
     "next": "14.2.3",
+    "next-themes": "^0.3.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@pandacss/dev": "^0.40.1",
     "@types/node": "20.14.2",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",

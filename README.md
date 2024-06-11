@@ -22,3 +22,4 @@ bun dev
 
 - [Next.js](https://nextjs.org/) as the framework
 - [Zag.js](https://zagjs.com/) for modeling the gallery
+- [Panda CSS](https://panda-css.com/) for styling
