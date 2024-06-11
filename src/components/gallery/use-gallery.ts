@@ -1,27 +1,23 @@
-import { createMachine } from '@zag-js/core'
+'use client'
 
-interface Image {
-  id: string
-  author: string
-  width: number
-  height: number
-  url: string
-  download_url: string
-}
+import { fetchImages } from '@/lib/fetch-images'
+import { GalleryImageData } from '@/lib/types'
+import { createMachine } from '@zag-js/core'
+import { useMachine } from '@zag-js/react'
 
 interface GalleryContext {
-  images: Image[]
+  images: GalleryImageData[]
   currentPage: number
   selectedIndex: number
   totalPages: number
-  readonly currentImage: Image | null
+  readonly currentImage: GalleryImageData | null
 }
 
 interface GalleryState {
   value: 'idle' | 'previewing'
 }
 
-export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
+function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
   return createMachine<GalleryContext, GalleryState>(
     {
       context: {
@@ -61,7 +57,6 @@ export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
         },
 
         previewing: {
-          activities: ['trackOutsideClick'],
           on: {
             dimiss: {
               target: 'idle',
@@ -92,7 +87,11 @@ export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
       activities: {
         setupInfiniteScroll(_ctx, _evt, { send }) {
           const root = document.querySelector('[data-infinite-scroll]')
-          if (!root) return
+          const sentinel = root?.querySelector(
+            '[data-infinite-scroll-sentinel]'
+          )
+
+          if (!root || !sentinel) return
 
           const observer = new IntersectionObserver(
             (entries) => {
@@ -103,26 +102,10 @@ export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
             { root, threshold: 0.2 }
           )
 
-          observer.observe(root.lastElementChild as Element)
+          observer.observe(sentinel)
 
           return () => {
             observer.disconnect()
-          }
-        },
-
-        trackOutsideClick(_ctx, _evt, { send }) {
-          const handleClick = (mouseEvent: MouseEvent) => {
-            const target = mouseEvent.composedPath?.()[0] ?? mouseEvent.target
-            if (!(target instanceof Element)) return
-            if (!target.closest('[data-preview-dialog]')) {
-              send({ type: 'dimiss', src: 'click-outside' })
-            }
-          }
-
-          document.addEventListener('click', handleClick)
-
-          return () => {
-            document.removeEventListener('click', handleClick)
           }
         },
       },
@@ -130,12 +113,9 @@ export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
       actions: {
         loadNextPage(ctx) {
           ctx.currentPage++
-          const url = `https://picsum.photos/v2/list?page=${ctx.currentPage}`
-          fetch(url)
-            .then((res) => res.json())
-            .then((images) => {
-              ctx.images.push(...images)
-            })
+          fetchImages(ctx.currentPage).then((images) => {
+            ctx.images.push(...images)
+          })
         },
 
         triggerDownload(ctx) {
@@ -174,4 +154,29 @@ export function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
       },
     }
   )
+}
+
+export function useGallery() {
+  const [state, send] = useMachine(galleryMachine())
+
+  return {
+    images: state.context.images,
+    currentImage: state.context.currentImage,
+    isPreviewing: state.matches('previewing'),
+    onClickNext() {
+      send('click.next')
+    },
+    onClickPrev() {
+      send('click.prev')
+    },
+    onDownload() {
+      send('click.download')
+    },
+    onSelect(index: number) {
+      send({ type: 'click.image', index })
+    },
+    onDismiss() {
+      send('dimiss')
+    },
+  }
 }

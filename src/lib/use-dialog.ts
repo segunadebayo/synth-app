@@ -1,8 +1,24 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 
-export function useDialog(open: boolean | undefined) {
+interface DialogProps {
+  open?: boolean
+  onClose?(): void
+}
+
+const useCallbackRef = (callback: Function | undefined) => {
+  const ref = useRef(callback)
+  ref.current = callback
+  return useCallback(() => ref.current?.(), [])
+}
+
+export function useDialog(props: DialogProps) {
+  const { open, onClose: onCloseProp } = props
+
+  // stabilize the reference to `props.onClose`
+  const onClose = useCallbackRef(onCloseProp)
+
   const ref = useRef<HTMLDialogElement>(null)
 
   useLayoutEffect(() => {
@@ -22,10 +38,13 @@ export function useDialog(open: boolean | undefined) {
       doc.body.style.paddingRight = ''
     }
 
-    dialog.addEventListener('close', restore)
+    dialog.addEventListener('close', () => {
+      restore()
+      onClose?.()
+    })
 
     return restore
-  }, [open])
+  }, [open, onClose])
 
   useEffect(() => {
     const dialog = ref.current

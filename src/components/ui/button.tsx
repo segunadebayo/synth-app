@@ -59,6 +59,12 @@ export const Button = styled('button', {
         paddingInline: '4',
         paddingBlock: '2',
       },
+      sm: {
+        fontSize: 'xs',
+        borderRadius: 'sm',
+        paddingInline: '3',
+        paddingBlock: '1',
+      },
     },
   },
 
