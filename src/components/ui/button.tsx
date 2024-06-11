@@ -8,6 +8,7 @@ export const Button = styled('button', {
     position: 'relative',
     fontWeight: 'medium',
     transition: 'background-color 0.2s, color 0.2s',
+    outline: 'none',
   },
 
   variants: {
@@ -18,12 +19,20 @@ export const Button = styled('button', {
         _hover: {
           bg: 'blue.700',
         },
+        _focusVisible: {
+          outline: '2px solid {colors.blue.300}',
+          outlineOffset: '2px',
+        },
       },
       secondary: {
         bg: 'gray.200',
         color: 'gray.800',
         _hover: {
           bg: 'gray.300',
+        },
+        _focusVisible: {
+          outline: '2px solid {colors.gray.300}',
+          outlineOffset: '2px',
         },
       },
       ghost: {
@@ -32,6 +41,9 @@ export const Button = styled('button', {
         _hover: {
           color: 'white',
         },
+        _focusVisible: {
+          outline: '2px solid {colors.white/80}',
+        },
       },
     },
 
@@ -39,6 +51,7 @@ export const Button = styled('button', {
       icon: {
         width: '16',
         height: '16',
+        borderRadius: 'md',
       },
       md: {
         fontSize: 'sm',
