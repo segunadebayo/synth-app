@@ -6,27 +6,36 @@ import { GalleryImageData } from '@/lib/types'
 import { createMachine } from '@zag-js/core'
 import { useMachine } from '@zag-js/react'
 
-interface GalleryContext {
-  images: GalleryImageData[]
-  currentPage: number
-  selectedIndex: number
+interface PrivateContext {
   totalPages: number
+  breakpoint?: 'mobile' | 'desktop'
+  mounted: boolean
   readonly currentImage: GalleryImageData | null
 }
 
-interface GalleryState {
-  value: 'idle' | 'previewing'
+interface PublicContext {
+  images: GalleryImageData[]
+  currentPage: number
+  selectedIndex: number
 }
 
-function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
+interface GalleryContext extends PublicContext, PrivateContext {}
+
+interface GalleryState {
+  value: 'idle' | 'idle:temp' | 'previewing'
+}
+
+function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
   return createMachine<GalleryContext, GalleryState>(
     {
       context: {
-        totalPages: 30,
         images: [],
         currentPage: 1,
         selectedIndex: -1,
+        totalPages: 30,
         ...incomingContext,
+        breakpoint: undefined,
+        mounted: false,
       },
 
       computed: {
@@ -44,6 +53,8 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
 
       initial: 'idle',
 
+      activities: ['setupBreakpointObserver'],
+
       states: {
         idle: {
           activities: ['setupInfiniteScroll'],
@@ -55,6 +66,18 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
               target: 'previewing',
               actions: ['setCurrentImage'],
             },
+            'breakpoint.set': {
+              target: 'idle:temp',
+              actions: ['setMounted', 'setCurrentBreakpoint'],
+            },
+          },
+        },
+
+        // when the breakpoint changes, we need to restart the infinite scroll
+        // hence the temporary state.
+        'idle:temp': {
+          after: {
+            0: 'idle',
           },
         },
 
@@ -76,6 +99,9 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
             'click.prev': {
               actions: ['showPrevImage'],
             },
+            'breakpoint.set': {
+              actions: ['setMounted', 'setCurrentBreakpoint'],
+            },
           },
         },
       },
@@ -88,9 +114,35 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
       },
 
       activities: {
-        setupInfiniteScroll(_ctx, _evt, { send }) {
+        setupBreakpointObserver(ctx, _evt, { send }) {
+          const exec = () => {
+            const { matches } = window.matchMedia('(min-width: 48rem)')
+            const breakpoint = matches ? 'desktop' : 'mobile'
+
+            // sync overlay size with the body, this is a hack for scroll restoration
+            const overlay = document.querySelector<HTMLElement>(
+              '[data-infinite-scroll-overlay]'
+            )
+            if (overlay) {
+              overlay.style.width = document.body.clientWidth + 'px'
+              overlay.style.height = document.body.clientHeight + 'px'
+            }
+
+            if (ctx.breakpoint === breakpoint) return
+            send({ type: 'breakpoint.set', breakpoint })
+          }
+
+          exec()
+
+          const observer = new ResizeObserver(exec)
+          observer.observe(document.body)
+          return () => {
+            observer.disconnect()
+          }
+        },
+        setupInfiniteScroll(ctx, _evt, { send }) {
           const sentinel = document?.querySelector(
-            '[data-infinite-scroll-sentinel]'
+            `[data-breakpoint=${ctx.breakpoint}] [data-infinite-scroll-sentinel]`
           )
 
           if (!sentinel) return
@@ -101,7 +153,7 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
                 send('scroll.bottom')
               }
             },
-            { threshold: 0.2 }
+            { threshold: 0.4 }
           )
 
           observer.observe(sentinel)
@@ -119,7 +171,6 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
             ctx.images.push(...images)
           })
         },
-
         triggerDownload(ctx, evt) {
           const image = evt.image || ctx.currentImage
           if (!image) return
@@ -128,24 +179,26 @@ function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
             `synth-app-${image.author}-${image.id}.jpg`
           )
         },
-
         showNextImage(ctx) {
           ctx.selectedIndex = Math.min(
             ctx.selectedIndex + 1,
             ctx.images.length - 1
           )
         },
-
         showPrevImage(ctx) {
           ctx.selectedIndex = Math.max(ctx.selectedIndex - 1, 0)
         },
-
         setCurrentImage(ctx, evt) {
           ctx.selectedIndex = evt.index
         },
-
         clearCurrentImage(ctx) {
           ctx.selectedIndex = -1
+        },
+        setCurrentBreakpoint(ctx, evt) {
+          ctx.breakpoint = evt.breakpoint
+        },
+        setMounted(ctx) {
+          ctx.mounted = true
         },
       },
     }
@@ -158,10 +211,15 @@ export function useGallery(props: { images: GalleryImageData[] }) {
     galleryStateMachine({ images, currentPage: 1 })
   )
 
+  const breakpoint = state.context.breakpoint
+  const mounted = state.context.mounted
+
   return {
     images: state.context.images,
     currentImage: state.context.currentImage,
     isPreviewing: state.matches('previewing'),
+    renderMobile: !mounted ? true : breakpoint === 'mobile',
+    renderDesktop: !mounted ? true : breakpoint === 'desktop',
     onClickNext() {
       send('click.next')
     },

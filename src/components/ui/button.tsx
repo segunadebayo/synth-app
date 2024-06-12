@@ -10,6 +10,7 @@ export const Button = styled('button', {
     transition: 'background-color 0.2s, color 0.2s',
     outline: 'none',
     userSelect: 'none',
+    pointerEvents: 'auto',
   },
 
   variants: {

@@ -2,13 +2,14 @@
 
 import { GalleryImageData } from '@/lib/types'
 import { styled } from '@/styled-system/jsx'
-import { GalleryImageItem } from './gallery-image-item'
 import { useMemo } from 'react'
+import { GalleryImageItem } from './gallery-image-item'
 
 interface GalleryGridProps {
   images: GalleryImageData[]
   onSelect?(image: GalleryImageData): void
   onDownload?(image: GalleryImageData): void
+  breakpoint?: 'mobile' | 'desktop'
 }
 
 const createColumns = (images: GalleryImageData[], numCols: number) => {
@@ -21,11 +22,19 @@ const createColumns = (images: GalleryImageData[], numCols: number) => {
 }
 
 export const GalleryImageGrid = (props: GalleryGridProps) => {
-  const { images, onDownload, onSelect } = props
-  const cols = useMemo(() => createColumns(images, 3), [images])
+  const { images, onDownload, onSelect, breakpoint } = props
+
+  const cols = useMemo(
+    () => createColumns(images, breakpoint === 'desktop' ? 3 : 2),
+    [images, breakpoint]
+  )
 
   return (
-    <Grid data-infinite-scroll>
+    <Grid
+      breakpoint={breakpoint}
+      data-infinite-scroll
+      data-breakpoint={breakpoint}
+    >
       {cols.map((col, i) => (
         <Col key={i}>
           {col.map((image) => (
@@ -58,17 +67,24 @@ const Grid = styled('div', {
   base: {
     '--gutter': { base: 'spacing.4', md: 'spacing.6' },
     display: 'grid',
-    gridTemplateColumns: {
-      base: 'repeat(2, minmax(0, 1fr))',
-      md: 'repeat(3, minmax(0, 1fr))',
-    },
-    marginInlineEnd: {
-      base: 'calc(-1 * var(--gutter))',
-      md: '0',
-    },
+    gridTemplateColumns: 'repeat(var(--columns), minmax(0, 1fr))',
+    marginInlineEnd: { base: 'calc(-1 * var(--gutter))', md: '0' },
     gridAutoFlow: 'column',
     position: 'relative',
     gridGap: 'var(--gutter)',
+    maxWidth: '100%',
+  },
+  variants: {
+    breakpoint: {
+      mobile: {
+        '--columns': '2',
+        hideFrom: 'md',
+      },
+      desktop: {
+        '--columns': '3',
+        hideBelow: 'md',
+      },
+    },
   },
 })
 
