@@ -14,17 +14,22 @@ interface GalleryImageProps {
   onDownload?(): void
 }
 
+const COMPRESSION_FACTOR = 6.5
+
 export const GalleryImageItem = (props: GalleryImageProps) => {
   const { data, onSelect, onDownload } = props
   const aspectRatio = (data.width / data.height).toFixed(2)
+
+  const minifiedWidth = Math.round(data.width / COMPRESSION_FACTOR)
+  const minifiedHeight = Math.round(data.height / COMPRESSION_FACTOR)
+
   return (
     <Figure className="group" onClick={onSelect} style={{ aspectRatio }}>
       <Image
         fill
-        quality={50}
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw"
         className={css({ objectFit: 'cover' })}
-        src={data.download_url}
+        src={`https://picsum.photos/id/${data.id}/${minifiedWidth}/${minifiedHeight}`}
         alt={data.author}
       />
       <HoverOverlay css={{ hideBelow: 'md' }} />

@@ -147,14 +147,11 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
 
           if (!sentinel) return
 
-          const observer = new IntersectionObserver(
-            (entries) => {
-              if (entries[0].isIntersecting) {
-                send('scroll.bottom')
-              }
-            },
-            { threshold: 0.4 }
-          )
+          const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+              send('scroll.bottom')
+            }
+          })
 
           observer.observe(sentinel)
 
