@@ -26,6 +26,7 @@ export const Button = styled('button', {
           outlineOffset: '2px',
         },
       },
+
       secondary: {
         bg: 'gray.200',
         color: 'gray.800',
@@ -37,6 +38,7 @@ export const Button = styled('button', {
           outlineOffset: '2px',
         },
       },
+
       ghost: {
         bg: 'transparent',
         color: 'white/80',
@@ -55,6 +57,7 @@ export const Button = styled('button', {
         height: '16',
         borderRadius: 'md',
       },
+
       'icon-sm': {
         width: '8',
         height: '8',
@@ -64,12 +67,14 @@ export const Button = styled('button', {
           height: '3',
         },
       },
+
       md: {
         fontSize: 'sm',
         borderRadius: 'md',
         paddingInline: '4',
         paddingBlock: '2',
       },
+
       sm: {
         fontSize: 'xs',
         borderRadius: 'sm',

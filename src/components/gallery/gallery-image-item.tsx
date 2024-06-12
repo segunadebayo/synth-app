@@ -1,7 +1,12 @@
 'use client'
 
 import { DownloadIcon } from '@/icons/download'
-import { GalleryImageData } from '@/lib/types'
+import type { PicsumImage } from '@/lib/picsum'
+import {
+  getCompressedImageSize,
+  getImageAspect,
+  getImageUrl,
+} from '@/lib/picsum'
 import { css } from '@/styled-system/css'
 import { styled } from '@/styled-system/jsx'
 import { hstack } from '@/styled-system/patterns'
@@ -9,19 +14,24 @@ import Image from 'next/image'
 import { Button } from '../ui/button'
 
 interface GalleryImageProps {
-  data: GalleryImageData
+  /**
+   * The image to display
+   */
+  image: PicsumImage
+  /**
+   * Callback when the image is clicked
+   */
   onSelect?(): void
+  /**
+   * Callback when the download button is clicked
+   */
   onDownload?(): void
 }
 
-const COMPRESSION_FACTOR = 6.5
-
 export const GalleryImageItem = (props: GalleryImageProps) => {
-  const { data, onSelect, onDownload } = props
-  const aspectRatio = (data.width / data.height).toFixed(2)
-
-  const minifiedWidth = Math.round(data.width / COMPRESSION_FACTOR)
-  const minifiedHeight = Math.round(data.height / COMPRESSION_FACTOR)
+  const { image, onSelect, onDownload } = props
+  const aspectRatio = getImageAspect(image)
+  const mini = getCompressedImageSize(image)
 
   return (
     <Figure className="group" onClick={onSelect} style={{ aspectRatio }}>
@@ -29,8 +39,8 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
         fill
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw"
         className={css({ objectFit: 'cover' })}
-        src={`https://picsum.photos/id/${data.id}/${minifiedWidth}/${minifiedHeight}`}
-        alt={data.author}
+        src={getImageUrl(image.id, mini.width, mini.height)}
+        alt={image.author}
       />
       <HoverOverlay css={{ hideBelow: 'md' }} />
       <ActionOverlay css={{ hideBelow: 'md' }}>
@@ -42,7 +52,7 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
               lineClamp: '1',
             })}
           >
-            {data.author}
+            {image.author}
           </div>
           <Button
             size="sm"

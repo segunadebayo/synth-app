@@ -3,7 +3,7 @@
 import { ChevronLeftIcon } from '@/icons/chevron-left'
 import { ChevronRightIcon } from '@/icons/chevron-right'
 import { XIcon } from '@/icons/x'
-import { GalleryImageData } from '@/lib/types'
+import type { PicsumImage } from '@/lib/picsum'
 import { useDialog } from '@/lib/use-dialog'
 import { css } from '@/styled-system/css'
 import { Float } from '@/styled-system/jsx'
@@ -13,11 +13,29 @@ import { Button } from '../ui/button'
 import { Dialog } from '../ui/dialog'
 
 interface GalleryImagePreviewProps {
-  image: GalleryImageData | null
+  /**
+   * The image to preview
+   */
+  image: PicsumImage | null
+  /**
+   * Whether the preview is open
+   */
   open?: boolean
+  /**
+   * Callback when the preview is closed
+   */
   onClose?(): void
+  /**
+   * Callback when the next button is clicked
+   */
   onClickNext?(): void
+  /**
+   *  Callback when the previous button is clicked
+   */
   onClickPrev?(): void
+  /**
+   * Callback when the download button is clicked
+   */
   onDownload?(): void
 }
 
@@ -75,6 +93,7 @@ export const GalleryImagePreview = (props: GalleryImagePreviewProps) => {
           </Button>
         </Float>
 
+        {/* Using this form method closes the dialog automatically when the button is clicked */}
         <form method="dialog">
           <Float
             placement="top-end"

@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "verbatimModuleSyntax": true,
     "paths": {
       "@/*": ["./src/*"],
       "@/styled-system/*": ["./styled-system/*"]

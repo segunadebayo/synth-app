@@ -1,56 +1,68 @@
 'use client'
 
-import { GalleryImageData } from '@/lib/types'
+import type { PicsumImage } from '@/lib/picsum'
 import { styled } from '@/styled-system/jsx'
 import { useMemo } from 'react'
 import { GalleryImageItem } from './gallery-image-item'
 
 interface GalleryGridProps {
-  images: GalleryImageData[]
-  onSelect?(image: GalleryImageData): void
-  onDownload?(image: GalleryImageData): void
+  /**
+   * The images to display in the grid
+   */
+  images: PicsumImage[]
+  /**
+   * Callback when an image is clicked
+   */
+  onSelect?(image: PicsumImage): void
+  /**
+   * Callback when an image's download button is clicked
+   */
+  onDownload?(image: PicsumImage): void
+  /**
+   * The breakpoint to render the grid ats
+   */
   breakpoint?: 'mobile' | 'desktop'
-}
-
-const createColumns = (images: GalleryImageData[], numCols: number) => {
-  const cols: GalleryImageData[][] = []
-  for (let i = 0; i < numCols; i++) cols[i] = []
-  images.forEach((image, i) => {
-    cols[i % numCols].push(image)
-  })
-  return cols
 }
 
 export const GalleryImageGrid = (props: GalleryGridProps) => {
   const { images, onDownload, onSelect, breakpoint } = props
 
-  const cols = useMemo(
+  const columns = useMemo(
     () => createColumns(images, breakpoint === 'desktop' ? 3 : 2),
     [images, breakpoint]
   )
 
   return (
-    <Grid
+    <ImageGrid
       breakpoint={breakpoint}
       data-infinite-scroll
       data-breakpoint={breakpoint}
     >
-      {cols.map((col, i) => (
-        <Col key={i}>
-          {col.map((image) => (
+      {columns.map((column, i) => (
+        <ImageColumn key={i}>
+          {column.map((image) => (
             <GalleryImageItem
               key={image.id}
-              data={image}
+              image={image}
               onDownload={() => onDownload?.(image)}
               onSelect={() => onSelect?.(image)}
             />
           ))}
-        </Col>
+        </ImageColumn>
       ))}
 
       <Sentinel data-infinite-scroll-sentinel />
-    </Grid>
+    </ImageGrid>
   )
+}
+
+const createColumns = (images: PicsumImage[], numCols: number) => {
+  const cols: PicsumImage[][] = []
+  for (let i = 0; i < numCols; i++) cols[i] = []
+  images.forEach((image, i) => {
+    cols[i % numCols].push(image)
+  })
+  return cols
 }
 
 const Sentinel = styled('div', {
@@ -63,12 +75,11 @@ const Sentinel = styled('div', {
   },
 })
 
-const Grid = styled('div', {
+const ImageGrid = styled('div', {
   base: {
     '--gutter': { base: 'spacing.4', md: 'spacing.6' },
     display: 'grid',
     gridTemplateColumns: 'repeat(var(--columns), minmax(0, 1fr))',
-    marginInlineEnd: { base: 'calc(-1 * var(--gutter))', md: '0' },
     gridAutoFlow: 'column',
     position: 'relative',
     gridGap: 'var(--gutter)',
@@ -88,7 +99,7 @@ const Grid = styled('div', {
   },
 })
 
-const Col = styled('div', {
+const ImageColumn = styled('div', {
   base: {
     display: 'grid',
     gridAutoRows: 'max-content',

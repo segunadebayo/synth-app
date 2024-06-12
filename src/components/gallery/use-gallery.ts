@@ -1,8 +1,6 @@
 'use client'
 
-import { fetchImages } from '@/lib/fetch-images'
-import { saveAsImage } from '@/lib/save-as-image'
-import { GalleryImageData } from '@/lib/types'
+import { downloadImage, fetchImages, type PicsumImage } from '@/lib/picsum'
 import { createMachine } from '@zag-js/core'
 import { useMachine } from '@zag-js/react'
 
@@ -10,13 +8,12 @@ interface PrivateContext {
   totalPages: number
   breakpoint?: 'mobile' | 'desktop'
   mounted: boolean
-  readonly currentImage: GalleryImageData | null
+  currentImage: PicsumImage | null
 }
 
 interface PublicContext {
-  images: GalleryImageData[]
+  images: PicsumImage[]
   currentPage: number
-  selectedIndex: number
 }
 
 interface GalleryContext extends PublicContext, PrivateContext {}
@@ -31,18 +28,11 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
       context: {
         images: [],
         currentPage: 1,
-        selectedIndex: -1,
-        totalPages: 30,
         ...incomingContext,
+        totalPages: 30,
+        currentImage: null,
         breakpoint: undefined,
         mounted: false,
-      },
-
-      computed: {
-        currentImage(ctx) {
-          if (ctx.selectedIndex === -1) return null
-          return ctx.images[ctx.selectedIndex]
-        },
       },
 
       on: {
@@ -52,6 +42,8 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
       },
 
       initial: 'idle',
+
+      entry: ['setMounted'],
 
       activities: ['setupBreakpointObserver'],
 
@@ -66,9 +58,9 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
               target: 'previewing',
               actions: ['setCurrentImage'],
             },
-            'breakpoint.set': {
+            'breakpoint.change': {
               target: 'idle:temp',
-              actions: ['setMounted', 'setCurrentBreakpoint'],
+              actions: ['setCurrentBreakpoint'],
             },
           },
         },
@@ -99,8 +91,8 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
             'click.prev': {
               actions: ['showPrevImage'],
             },
-            'breakpoint.set': {
-              actions: ['setMounted', 'setCurrentBreakpoint'],
+            'breakpoint.change': {
+              actions: ['setCurrentBreakpoint'],
             },
           },
         },
@@ -109,7 +101,9 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
     {
       guards: {
         hasNextImage(ctx) {
-          return ctx.selectedIndex < ctx.images.length - 1
+          const selectedIndex = ctx.currentImage?.index
+          if (selectedIndex == null) return false
+          return selectedIndex < ctx.images.length - 1
         },
       },
 
@@ -129,7 +123,7 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
             }
 
             if (ctx.breakpoint === breakpoint) return
-            send({ type: 'breakpoint.set', breakpoint })
+            send({ type: 'breakpoint.change', breakpoint })
           }
 
           exec()
@@ -154,7 +148,6 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
           })
 
           observer.observe(sentinel)
-
           return () => {
             observer.disconnect()
           }
@@ -171,25 +164,23 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
         triggerDownload(ctx, evt) {
           const image = evt.image || ctx.currentImage
           if (!image) return
-          saveAsImage(
-            image.download_url,
-            `synth-app-${image.author}-${image.id}.jpg`
-          )
+          downloadImage(image)
         },
         showNextImage(ctx) {
-          ctx.selectedIndex = Math.min(
-            ctx.selectedIndex + 1,
-            ctx.images.length - 1
-          )
+          const selectedIndex = ctx.currentImage?.index || 0
+          const nextIndex = Math.min(selectedIndex + 1, ctx.images.length - 1)
+          ctx.currentImage = ctx.images[nextIndex] || null
         },
         showPrevImage(ctx) {
-          ctx.selectedIndex = Math.max(ctx.selectedIndex - 1, 0)
+          const selectedIndex = ctx.currentImage?.index || 0
+          const prevIndex = Math.max(selectedIndex - 1, 0)
+          ctx.currentImage = ctx.images[prevIndex] || null
         },
         setCurrentImage(ctx, evt) {
-          ctx.selectedIndex = evt.index
+          ctx.currentImage = ctx.images[evt.index] || null
         },
         clearCurrentImage(ctx) {
-          ctx.selectedIndex = -1
+          ctx.currentImage = null
         },
         setCurrentBreakpoint(ctx, evt) {
           ctx.breakpoint = evt.breakpoint
@@ -202,7 +193,7 @@ function galleryStateMachine(incomingContext: Partial<PublicContext> = {}) {
   )
 }
 
-export function useGallery(props: { images: GalleryImageData[] }) {
+export function useGallery(props: { images: PicsumImage[] }) {
   const { images } = props
   const [state, send] = useMachine(
     galleryStateMachine({ images, currentPage: 1 })
@@ -223,11 +214,11 @@ export function useGallery(props: { images: GalleryImageData[] }) {
     onClickPrev() {
       send('click.prev')
     },
-    onDownload(image?: GalleryImageData) {
+    onDownload(image?: PicsumImage) {
       send({ type: 'click.download', image })
     },
-    onSelect(index: number) {
-      send({ type: 'click.image', index })
+    onSelect(image: PicsumImage) {
+      send({ type: 'click.image', index: image.index })
     },
     onDismiss() {
       send('dimiss')

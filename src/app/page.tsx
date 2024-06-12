@@ -1,5 +1,5 @@
 import { Gallery } from '@/components/gallery/gallery'
-import { fetchImages } from '@/lib/fetch-images'
+import { fetchImages } from '@/lib/picsum'
 import { css } from '@/styled-system/css'
 import { container, stack } from '@/styled-system/patterns'
 

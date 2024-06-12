@@ -1,16 +1,17 @@
 'use client'
 
-import { GalleryImageData } from '@/lib/types'
+import type { PicsumImage } from '@/lib/picsum'
+import { styled } from '@/styled-system/jsx'
 import { GalleryImageGrid } from './gallery-image-grid'
 import { GalleryImagePreview } from './gallery-image-preview'
 import { useGallery } from './use-gallery'
 
 interface GalleryProps {
-  defaultImages: GalleryImageData[]
+  defaultImages: PicsumImage[]
 }
 
 /*
-    Question that comes to mind: Why render the image grid twice? Short answer: Masonory grids are hard 😅
+    Question that comes to mind: Why render the image grid twice? Short answer: Masonry grids are hard 😅
 
     Goal 🎯: Solve the masonry grid in a way that works for both SSR and CSR
     - SSR: render both mobile and desktop grids, hiding the one that doesn't match the breakpoint using CSS
@@ -33,10 +34,7 @@ export const Gallery = (props: GalleryProps) => {
           breakpoint="mobile"
           images={state.images}
           onDownload={state.onDownload}
-          onSelect={(image) => {
-            const idx = state.images.findIndex((img) => img.id === image.id)
-            state.onSelect(idx)
-          }}
+          onSelect={state.onSelect}
         />
       )}
 
@@ -45,22 +43,12 @@ export const Gallery = (props: GalleryProps) => {
           breakpoint="desktop"
           images={state.images}
           onDownload={state.onDownload}
-          onSelect={(image) => {
-            const idx = state.images.findIndex((img) => img.id === image.id)
-            state.onSelect(idx)
-          }}
+          onSelect={state.onSelect}
         />
       )}
 
       {/* Used to preserve scroll positions. @see `use-gallery.ts` L123 */}
-      <div
-        data-infinite-scroll-overlay
-        style={{
-          position: 'absolute',
-          inset: '0',
-          pointerEvents: 'none',
-        }}
-      />
+      <ScrollRestoration data-infinite-scroll-overlay />
 
       <GalleryImagePreview
         open={state.isPreviewing}
@@ -73,3 +61,11 @@ export const Gallery = (props: GalleryProps) => {
     </div>
   )
 }
+
+const ScrollRestoration = styled('div', {
+  base: {
+    position: 'absolute',
+    inset: '0',
+    pointerEvents: 'none',
+  },
+})

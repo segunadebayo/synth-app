@@ -41,6 +41,7 @@ export function useDialog(props: DialogProps) {
     return restore
   }, [open, onClose])
 
+  // handle outside click to close dialog
   useEffect(() => {
     const dialog = ref.current
     if (!dialog) return
@@ -55,7 +56,6 @@ export function useDialog(props: DialogProps) {
     }
 
     doc.addEventListener('click', handleClick)
-
     return () => {
       doc.removeEventListener('click', handleClick)
     }
