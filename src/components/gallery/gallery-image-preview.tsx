@@ -51,6 +51,7 @@ export const GalleryImagePreview = (props: GalleryImagePreviewProps) => {
         </div>
 
         <Image
+          priority
           className={css({
             height: { md: '64dvh', lg: '75dvh' },
             objectFit: 'contain',
