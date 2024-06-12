@@ -1,9 +1,12 @@
+'use client'
+
 import { GalleryImageData } from '@/lib/types'
 import { css, cx } from '@/styled-system/css'
 import { styled } from '@/styled-system/jsx'
 import { hstack } from '@/styled-system/patterns'
 import Image from 'next/image'
 import { Button } from '../ui/button'
+import { DownloadIcon } from '@/icons/download'
 
 interface GalleryImageProps {
   data: GalleryImageData
@@ -15,21 +18,18 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
   const { data, onSelect, onDownload } = props
   const aspectRatio = (data.width / data.height).toFixed(2)
   return (
-    <figure
-      className={cx('group', css({ position: 'relative', cursor: 'zoom-in' }))}
-      onClick={onSelect}
-      style={{ aspectRatio }}
-    >
+    <Figure className="group" onClick={onSelect} style={{ aspectRatio }}>
       <Image
         fill
-        className={css({ objectFit: 'cover', height: '200px' })}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className={css({ objectFit: 'cover' })}
         src={data.download_url}
         alt={data.author}
       />
 
-      <Backdrop />
+      <Backdrop css={{ hideBelow: 'md' }} />
 
-      <ActionOverlay>
+      <ActionOverlay css={{ hideBelow: 'md' }}>
         <div className={hstack({ width: 'full', justify: 'space-between' })}>
           <div
             className={css({
@@ -44,15 +44,32 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
             size="sm"
             variant="secondary"
             type="button"
-            onClick={onDownload}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDownload?.()
+            }}
           >
             Download
           </Button>
         </div>
       </ActionOverlay>
-    </figure>
+
+      <ActionOverlay static css={{ hideFrom: 'md' }}>
+        <Button size="icon-sm" variant="secondary">
+          <DownloadIcon />
+        </Button>
+      </ActionOverlay>
+    </Figure>
   )
 }
+
+const Figure = styled('figure', {
+  base: {
+    position: 'relative',
+    cursor: 'pointer',
+    bg: 'gray.100',
+  },
+})
 
 const Backdrop = styled('div', {
   base: {
@@ -77,10 +94,24 @@ const ActionOverlay = styled('div', {
     position: 'absolute',
     inset: '0',
     color: 'white',
-    opacity: 0,
-    transition: 'opacity 0.2s',
-    _groupHover: {
-      opacity: 1,
+  },
+
+  variants: {
+    static: {
+      true: {
+        justifyContent: 'flex-end',
+      },
+      false: {
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        _groupHover: {
+          opacity: 1,
+        },
+      },
     },
+  },
+
+  defaultVariants: {
+    static: false,
   },
 })

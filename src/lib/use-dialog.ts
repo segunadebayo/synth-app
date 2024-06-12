@@ -1,16 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallbackRef } from './use-callback-ref'
 
 interface DialogProps {
   open?: boolean
   onClose?(): void
-}
-
-const useCallbackRef = (callback: Function | undefined) => {
-  const ref = useRef(callback)
-  ref.current = callback
-  return useCallback(() => ref.current?.(), [])
 }
 
 export function useDialog(props: DialogProps) {
@@ -25,7 +20,7 @@ export function useDialog(props: DialogProps) {
     const dialog = ref.current
     if (!open || !dialog) return
 
-    // open dialog in blocking mode
+    // open dialog in modal mode
     dialog?.showModal()
 
     // block scroll (simple version, not perfect)
@@ -64,7 +59,7 @@ export function useDialog(props: DialogProps) {
     return () => {
       doc.removeEventListener('click', handleClick)
     }
-  }, [])
+  }, [open])
 
   return ref
 }

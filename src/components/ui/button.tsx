@@ -9,6 +9,7 @@ export const Button = styled('button', {
     fontWeight: 'medium',
     transition: 'background-color 0.2s, color 0.2s',
     outline: 'none',
+    userSelect: 'none',
   },
 
   variants: {
@@ -52,6 +53,15 @@ export const Button = styled('button', {
         width: '16',
         height: '16',
         borderRadius: 'md',
+      },
+      'icon-sm': {
+        width: '8',
+        height: '8',
+        borderRadius: 'md',
+        '& svg': {
+          width: '3',
+          height: '3',
+        },
       },
       md: {
         fontSize: 'sm',

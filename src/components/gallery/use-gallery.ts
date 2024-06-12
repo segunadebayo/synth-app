@@ -1,6 +1,7 @@
 'use client'
 
 import { fetchImages } from '@/lib/fetch-images'
+import { saveAsImage } from '@/lib/save-as-image'
 import { GalleryImageData } from '@/lib/types'
 import { createMachine } from '@zag-js/core'
 import { useMachine } from '@zag-js/react'
@@ -17,7 +18,7 @@ interface GalleryState {
   value: 'idle' | 'previewing'
 }
 
-function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
+function galleryStateMachine(incomingContext: Partial<GalleryContext> = {}) {
   return createMachine<GalleryContext, GalleryState>(
     {
       context: {
@@ -30,7 +31,8 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
 
       computed: {
         currentImage(ctx) {
-          return ctx.images[ctx.selectedIndex] || null
+          if (ctx.selectedIndex === -1) return null
+          return ctx.images[ctx.selectedIndex]
         },
       },
 
@@ -57,6 +59,7 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
         },
 
         previewing: {
+          exit: ['clearCurrentImage'],
           on: {
             dimiss: {
               target: 'idle',
@@ -80,18 +83,17 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
     {
       guards: {
         hasNextImage(ctx) {
-          return ctx.currentPage < ctx.totalPages
+          return ctx.selectedIndex < ctx.images.length - 1
         },
       },
 
       activities: {
         setupInfiniteScroll(_ctx, _evt, { send }) {
-          const root = document.querySelector('[data-infinite-scroll]')
-          const sentinel = root?.querySelector(
+          const sentinel = document?.querySelector(
             '[data-infinite-scroll-sentinel]'
           )
 
-          if (!root || !sentinel) return
+          if (!sentinel) return
 
           const observer = new IntersectionObserver(
             (entries) => {
@@ -99,7 +101,7 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
                 send('scroll.bottom')
               }
             },
-            { root, threshold: 0.2 }
+            { threshold: 0.2 }
           )
 
           observer.observe(sentinel)
@@ -118,23 +120,13 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
           })
         },
 
-        triggerDownload(ctx) {
-          if (!ctx.currentImage) return
-          const link = document.createElement('a')
-          link.href = ctx.currentImage.download_url
-          link.download = `${ctx.currentImage.id}.jpg`
-
-          // link.click() doesn't work in firefox
-          link.dispatchEvent(
-            new MouseEvent('click', {
-              bubbles: true,
-              cancelable: true,
-            })
+        triggerDownload(ctx, evt) {
+          const image = evt.image || ctx.currentImage
+          if (!image) return
+          saveAsImage(
+            image.download_url,
+            `synth-app-${image.author}-${image.id}.jpg`
           )
-
-          queueMicrotask(() => {
-            link.remove()
-          })
         },
 
         showNextImage(ctx) {
@@ -151,13 +143,20 @@ function galleryMachine(incomingContext: Partial<GalleryContext> = {}) {
         setCurrentImage(ctx, evt) {
           ctx.selectedIndex = evt.index
         },
+
+        clearCurrentImage(ctx) {
+          ctx.selectedIndex = -1
+        },
       },
     }
   )
 }
 
-export function useGallery() {
-  const [state, send] = useMachine(galleryMachine())
+export function useGallery(props: { images: GalleryImageData[] }) {
+  const { images } = props
+  const [state, send] = useMachine(
+    galleryStateMachine({ images, currentPage: 1 })
+  )
 
   return {
     images: state.context.images,
@@ -169,8 +168,8 @@ export function useGallery() {
     onClickPrev() {
       send('click.prev')
     },
-    onDownload() {
-      send('click.download')
+    onDownload(image?: GalleryImageData) {
+      send({ type: 'click.download', image })
     },
     onSelect(index: number) {
       send({ type: 'click.image', index })

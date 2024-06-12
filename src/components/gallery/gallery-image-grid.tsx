@@ -1,11 +1,9 @@
 'use client'
 
-import { chunkArray } from '@/lib/chunk-array'
 import { GalleryImageData } from '@/lib/types'
 import { styled } from '@/styled-system/jsx'
-import { flex } from '@/styled-system/patterns'
-import { useMemo } from 'react'
 import { GalleryImageItem } from './gallery-image-item'
+import { useMemo } from 'react'
 
 interface GalleryGridProps {
   images: GalleryImageData[]
@@ -13,42 +11,71 @@ interface GalleryGridProps {
   onDownload?(image: GalleryImageData): void
 }
 
-const Sentinel = styled('div', {
-  base: {
-    height: '40px',
-    position: 'absolute',
-    bottom: '0',
-    zIndex: '-1',
-    bg: 'red',
-  },
-})
+const createColumns = (images: GalleryImageData[], numCols: number) => {
+  const cols: GalleryImageData[][] = []
+  for (let i = 0; i < numCols; i++) cols[i] = []
+  images.forEach((image, i) => {
+    cols[i % numCols].push(image)
+  })
+  return cols
+}
 
 export const GalleryImageGrid = (props: GalleryGridProps) => {
   const { images, onDownload, onSelect } = props
-  const grid = useMemo(() => chunkArray(images, 3), [images])
+  const cols = useMemo(() => createColumns(images, 3), [images])
 
   return (
-    <div
-      className={flex({ position: 'relative', gap: '6' })}
-      data-infinite-scroll
-    >
-      {grid.map((row, idx) => (
-        <div
-          key={idx}
-          className={flex({ flex: '1', direction: 'column', gap: '6' })}
-        >
-          {row.map((image) => (
+    <Grid data-infinite-scroll>
+      {cols.map((col, i) => (
+        <Col key={i}>
+          {col.map((image) => (
             <GalleryImageItem
-              data={image}
               key={image.id}
+              data={image}
               onDownload={() => onDownload?.(image)}
               onSelect={() => onSelect?.(image)}
             />
           ))}
-        </div>
+        </Col>
       ))}
 
       <Sentinel data-infinite-scroll-sentinel />
-    </div>
+    </Grid>
   )
 }
+
+const Sentinel = styled('div', {
+  base: {
+    height: '50dvh',
+    position: 'absolute',
+    bottom: '0',
+    insetX: '0',
+    zIndex: '1',
+  },
+})
+
+const Grid = styled('div', {
+  base: {
+    '--gutter': { base: 'spacing.4', md: 'spacing.6' },
+    display: 'grid',
+    gridTemplateColumns: {
+      base: 'repeat(2, minmax(0, 1fr))',
+      md: 'repeat(3, minmax(0, 1fr))',
+    },
+    marginInlineEnd: {
+      base: 'calc(-1 * var(--gutter))',
+      md: '0',
+    },
+    gridAutoFlow: 'column',
+    position: 'relative',
+    gridGap: 'var(--gutter)',
+  },
+})
+
+const Col = styled('div', {
+  base: {
+    display: 'grid',
+    gridAutoRows: 'max-content',
+    gridGap: 'var(--gutter)',
+  },
+})
