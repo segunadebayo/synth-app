@@ -34,7 +34,17 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
   const mini = getCompressedImageSize(image)
 
   return (
-    <Figure className="group" onClick={onSelect} style={{ aspectRatio }}>
+    <Figure
+      tabIndex={0}
+      aria-label={`View image ${image.id} by ${image.author}`}
+      className="group"
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.currentTarget !== event.target) return
+        if (event.key === 'Enter') onSelect?.()
+      }}
+      style={{ aspectRatio }}
+    >
       <Image
         fill
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw"
@@ -71,6 +81,7 @@ export const GalleryImageItem = (props: GalleryImageProps) => {
         <Button
           size="icon-sm"
           variant="secondary"
+          aria-label="Download image"
           onClick={(event) => {
             event.stopPropagation()
             onDownload?.()
@@ -89,6 +100,10 @@ const Figure = styled('figure', {
     cursor: 'pointer',
     background: 'gray.300',
     userSelect: 'none',
+    _focusVisible: {
+      outline: '2px solid {colors.blue.300}',
+      outlineOffset: '2px',
+    },
   },
 })
 
@@ -125,9 +140,11 @@ const ActionOverlay = styled('div', {
         justifyContent: 'flex-end',
       },
       false: {
+        display: 'none',
         opacity: 0,
         transition: 'opacity 0.2s',
         _groupHover: {
+          display: 'flex',
           opacity: 1,
         },
       },

@@ -31,4 +31,4 @@ Given more time, I would like to:
 - Test the application on mobile and tablet devices, fixing any issues
 - Consider using Context API for `gallery.tsx` instead of prop drilling
 - Write a end-to-end test using [Playwright](https://playwright.dev/)
-- Streamline heading and text to dedicated components
+- Improve keyboard accessibility, masonry grids are notorious for being difficult to navigate with a keyboard.
