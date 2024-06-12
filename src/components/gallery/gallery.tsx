@@ -10,14 +10,14 @@ interface GalleryProps {
 }
 
 /*
-    Question that comes to mind: Why are we render the grid twice? Short answer: to masonory grids are hard 😅
+    Question that comes to mind: Why render the image grid twice? Short answer: Masonory grids are hard 😅
 
-    Goal: Solve the masonry grid in a way that works for both SSR and CSR
+    Goal 🎯: Solve the masonry grid in a way that works for both SSR and CSR
     - SSR: render both mobile and desktop grids, hiding the one that doesn't match the breakpoint using CSS
     - CSR: After hydration, remove the grid that doesn't match the breakpoint using JS
 
     To test this, turn off JS to see if the SSR version works as expected.
-    Then turn JS back on and resize the window to see if the CSR version works as expected.
+    Then turn JS back on and resize the window to see the CSR version works as expected.
 
     Ideally, we should use grid-template-columns=masonry, but that's not supported in all browsers
 */
@@ -52,7 +52,7 @@ export const Gallery = (props: GalleryProps) => {
         />
       )}
 
-      {/* Used to preserve scroll positions. See use-gallery L123 */}
+      {/* Used to preserve scroll positions. @see `use-gallery.ts` L123 */}
       <div
         data-infinite-scroll-overlay
         style={{
