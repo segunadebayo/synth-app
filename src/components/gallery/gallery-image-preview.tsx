@@ -34,7 +34,13 @@ export const GalleryImagePreview = (props: GalleryImagePreviewProps) => {
         <div className={hstack({ justify: 'space-between' })}>
           <div>
             <p className={css({ fontWeight: 'medium' })}>{image.author}</p>
-            <div className={css({ color: 'gray.500', textStyle: 'xs' })}>
+            <div
+              className={css({
+                color: 'gray.500',
+                textStyle: 'xs',
+                lineClamp: '1',
+              })}
+            >
               {image.width}px x {image.height}px
             </div>
           </div>
@@ -46,7 +52,7 @@ export const GalleryImagePreview = (props: GalleryImagePreviewProps) => {
 
         <Image
           className={css({
-            height: '75dvh',
+            height: { md: '64dvh', lg: '75dvh' },
             objectFit: 'contain',
             marginInline: 'auto',
           })}
@@ -69,7 +75,11 @@ export const GalleryImagePreview = (props: GalleryImagePreviewProps) => {
         </Float>
 
         <form method="dialog">
-          <Float placement="top-end" offsetX="-8" css={{ hideBelow: 'md' }}>
+          <Float
+            placement="top-end"
+            offsetX={{ base: '8', md: '-8' }}
+            offsetY={{ base: '-8', md: '0' }}
+          >
             <Button size="icon" variant="ghost">
               <XIcon />
             </Button>

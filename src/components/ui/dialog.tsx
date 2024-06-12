@@ -3,12 +3,12 @@ import { styled } from '@/styled-system/jsx'
 export const Dialog = styled('dialog', {
   base: {
     position: 'fixed',
-    top: { md: '10' },
+    top: { base: 'unset', md: '10' },
     background: 'white',
     shadow: { base: 'bottom', md: 'md' },
     bottom: { base: '0', md: 'unset' },
     borderRadius: 'md',
-    width: 'full',
+    maxWidth: 'unset',
     marginInline: 'auto',
     overflow: 'visible',
     color: 'gray.900',
@@ -20,14 +20,14 @@ export const Dialog = styled('dialog', {
 
   variants: {
     size: {
-      medium: {
+      md: {
         padding: '5',
-        maxWidth: '8xl',
+        insetInline: { base: '0', md: '100px', lg: '150px' },
       },
     },
   },
 
   defaultVariants: {
-    size: 'medium',
+    size: 'md',
   },
 })

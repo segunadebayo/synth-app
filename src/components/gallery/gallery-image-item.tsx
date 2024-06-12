@@ -68,6 +68,7 @@ const Figure = styled('figure', {
     position: 'relative',
     cursor: 'pointer',
     bg: 'gray.100',
+    userSelect: 'none',
   },
 })
 
